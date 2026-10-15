@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legacy Code Explainer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            padding: 24px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 32px 24px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            border-left: 4px solid #6366f1;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #f1f5f9;
+        }
+        
+        .header-subtitle {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        
+        .industry-badge {
+            display: inline-block;
+            background: #6366f1;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+        
+        .use-case-badge {
+            display: inline-block;
+            background: #8b5cf6;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .card-icon {
+            font-size: 20px;
+        }
+        
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #cbd5e1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        textarea, select {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+            margin-bottom: 12px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        textarea:focus, select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        textarea {
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        }
+        
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .clear-btn {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+        }
+        
+        .hint {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 24px;
+            color: #94a3b8;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #334155;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .output-section {
+            display: none;
+        }
+        
+        .output-section.active {
+            display: block;
+        }
+        
+        .output-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            line-height: 1.6;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .output-heading {
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 8px;
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #dc2626;
+            color: #fca5a5;
+        }
+        
+        .success {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: #22c55e;
+            color: #86efac;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid #334155;
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        footer a {
+            color: #6366f1;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        footer a:hover {
+            color: #8b5cf6;
+        }
+
+        .sample-code {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            color: #cbd5e1;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Legacy Code Explainer</h1>
+            <div class="header-subtitle">Professional Code Analysis & Modernisation Guidance</div>
+            <div style="margin-top: 12px;">
+                <span class="industry-badge">BFSI / Insurance / Government</span>
+                <span class="use-case-badge">Legacy Code Analysis</span>
+            </div>
+        </header>
+        
+        <div class="grid">
+            <div class="card">
+                <h2><span class="card-icon">📝</span> Input Code</h2>
+                
+                <label for="language">Programming Language</label>
+                <select id="language">
+                    <option value="COBOL">COBOL</option>
+                    <option value="VB6">VB6 (Visual Basic 6)</option>
+                    <option value="PL/SQL">PL/SQL</option>
+                    <option value="RPG">RPG</option>
+                    <option value="ABAP">ABAP (SAP)</option>
+                    <option value="Fortran">Fortran</option>
+                    <option value="Pascal">Pascal</option>
+                    <option value="Other">Other Legacy Language</option>
+                </select>
+                
+                <label for="codeInput">Paste Your Legacy Code Here</label>
+                <textarea id="codeInput" placeholder="IDENTIFICATION DIVISION.&#10;PROGRAM-ID. SAMPLE-PROG.&#10;...">       IDENTIFICATION DIVISION.
+       PROGRAM-ID. CALCULATE-LOAN-PAYMENT.
+       
+       DATA DIVISION.
+       FILE SECTION.
+       WORKING-STORAGE SECTION.
+       01 WS-LOAN-AMOUNT      PIC 9(10)V99.
+       01 WS-INTEREST-RATE    PIC 9V999.
+       01 WS-TENURE-MONTHS    PIC 9(3).
+       01 WS-MONTHLY-RATE     PIC 9V9(6).
+       01 WS-PAYMENT          PIC 9(10)V99.
+       01 WS-TEMP             PIC 9(10)V9(10).
+       
+       PROCEDURE DIVISION.
+           ACCEPT WS-LOAN-AMOUNT.
+           ACCEPT WS-INTEREST-RATE.
+           ACCEPT WS-TENURE-MONTHS.
+           
+           DIVIDE WS-INTEREST-RATE BY 12 
+               GIVING WS-MONTHLY-RATE.
+           
+           COMPUTE WS-TEMP = 
+               (1 + WS-MONTHLY-RATE) ** WS-TENURE-MONTHS.
+           
+           COMPUTE WS-PAYMENT = WS-LOAN-AMOUNT * WS-MONTHLY-RATE * WS-TEMP
+               / (WS-TEMP - 1).
+           
+           DISPLAY "Monthly Payment: " WS-PAYMENT.
+           STOP RUN.</textarea>
+                
+                <div class="button-group">
+                    <button onclick="analyzeCode()">Analyze Code →</button>
+                    <button class="clear-btn" onclick="clearAll()">Clear</button>
+                </div>
+                <div class="hint">💡 Sample COBOL code is pre-filled. Just click "Analyze Code" to start!</div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="card-icon">✨</span> Analysis Results</h2>
+                
+                <div class="loading" id="loading">
+                    <span class="spinner"></span>Analyzing code...
+                </div>
+                
+                <div class="output-section" id="outputSection">
+                    <div class="output-box" id="summaryOutput"></div>
+                    <div class="output-box" id="businessRulesOutput"></div>
+                    <div class="output-box" id="inputsOutputsOutput"></div>
+                    <div class="output-box" id="risksOutput"></div>
+                    <div class="output-box" id="modernOutput"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        Powered by Bharat AI · For more information connect <a href="mailto:atulmca@yahoo.com">atulmca@yahoo.com</a>
+    </footer>
+
+    <script>
+        async function analyzeCode() {
+            const codeInput = document.getElementById('codeInput').value.trim();
+            const language = document.getElementById('language').value;
+            const loading = document.getElementById('loading');
+            const outputSection = document.getElementById('outputSection');
+            
+            if (!codeInput) {
+                alert('Please paste some legacy code to analyze.');
+                return;
+            }
+            
+            loading.style.display = 'block';
+            outputSection.classList.remove('active');
+            
+            const prompt = `You are a senior software engineer specialising in legacy system modernisation. Analyze the following ${language} code snippet and provide:
+
+1. **Plain English Summary**: Explain what this code does in non-technical terms (2-3 sentences).
+2. **Business Rules**: List all business rules, constraints, and logic embedded in the code.
+3. **Inputs, Outputs & Dependencies**: Detail all data inputs, outputs, external dependencies, and file/database interactions.
+4. **Risks & Issues**: Flag any bugs, security vulnerabilities, obsolete patterns, performance issues, or maintainability concerns.
+5. **Modern Equivalent**: Suggest a modern language/framework and architectural pattern to replace this code.
+
+Format your response with clear section headers (## Plain English Summary, ## Business Rules, etc.). Be specific and technical.
+
+Code in ${language}:
+\`\`\`
+${codeInput}
+\`\`\``;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'claude-haiku-4-5-20251001',
+                        max_tokens: 2000,
+                        messages: [{ role: 'user', content: prompt }]
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const analysisText = data.content[0].text;
+                
+                renderAnalysis(analysisText);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('summaryOutput').innerHTML = 
+                    `<div class="output-box error"><strong>Error:</strong> ${error.message}. Please try again.</div>`;
+                outputSection.classList.add('active');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        function renderAnalysis(text) {
+            const outputSection = document.getElementById('outputSection');
+            const sections = {
+                summaryOutput: '',
+                businessRulesOutput: '',
+                inputsOutputsOutput: '',
+                risksOutput: '',
+                modernOutput: ''
+            };
+            
+            const lines = text.split('\n');
+            let currentSection = null;
+            let currentContent = [];
+            
+            for (const line of lines) {
+                if (line.includes('Plain English Summary')) {
+                    if (currentSection && sections[currentSection] !== undefined) {
+                        sections[currentSection] = currentContent.join('\n').trim();
+                    }
+                    currentSection = 'summaryOutput';
+                    currentContent = [];
+                } else if (line.includes('Business Rules')) {
+                    if (currentSection && sections[currentSection] !== undefined) {
+                        sections[currentSection] = currentContent.join('\n').trim();
+                    }
+                    currentSection = 'businessRulesOutput';
+                    currentContent = [];
+                } else if (line.includes('Inputs') || line.includes('Outputs')) {
+                    if (currentSection && sections[currentSection] !== undefined) {
+                        sections[currentSection] = currentContent.join('\n').trim();
+                    }
+                    currentSection = 'inputsOutputsOutput';
+                    currentContent = [];
+                } else if (line.includes('Risks') || line.includes('Issues')) {
+                    if (currentSection && sections[currentSection] !== undefined) {
+                        sections[currentSection] = currentContent.join('\n').trim();
+                    }
+                    currentSection = 'risksOutput';
+                    currentContent = [];
+                } else if (line.includes('Modern') || line.includes('Equivalent')) {
+                    if (currentSection && sections[currentSection] !== undefined) {
+                        sections[currentSection] = currentContent.join('\n').trim();
+                    }
+                    currentSection = 'modernOutput';
+                    currentContent = [];
+                } else {
+                    currentContent.push(line);
+                }
+            }
+            
+            if (currentSection && sections[currentSection] !== undefined) {
+                sections[currentSection] = currentContent.join('\n').trim();
+            }
+            
+            document.getElementById('summaryOutput').innerHTML = 
+                `<div class="output-heading">📋 Plain English Summary</div>${formatText(sections.summaryOutput || text.substring(0, 300))}`;
+            
+            document.getElementById('businessRulesOutput').innerHTML = 
+                `<div class="output-heading">⚙️ Business Rules</div>${formatText(sections.businessRulesOutput || 'No business rules extracted')}`;
+            
+            document.getElementById('inputsOutputsOutput').innerHTML = 
+                `<div class="output-heading">🔄 Inputs, Outputs & Dependencies</div>${formatText(sections.inputsOutputsOutput || 'No I/O details extracted')}`;
+            
+            document.getElementById('risksOutput').innerHTML = 
+                `<div class="output-heading">⚠️ Risks & Issues</div>${formatText(sections.risksOutput || 'No risks identified')}`;
+            
+            document.getElementById('modernOutput').innerHTML = 
+                `<div class="output-heading">🚀 Modern Equivalent</div>${formatText(sections.modernOutput || 'No recommendations')}`;
+            
+            outputSection.classList.add('active');
+        }
+        
+        function formatText(text) {
+            if (!text) return '<p style="color: #94a3b8;">No content available</p>';
+            
+            let html = text
+                .split('\n')
+                .map(line => {
+                    line = line.trim();
+                    if (!line) return '';
+                    if (line.startsWith('##')) {
+                        return `<div style="font-weight: 600; margin-top: 12px; color: #6366f1;">${line.replace(/^##\s*/, '')}</div>`;
+                    }
+                    if (line.match(/^[-*]\s/)) {
+                        return `<div style="margin-left: 16px; margin-top: 4px;">• ${line.substring(2)}</div>`;
+                    }
+                    if (line.match(/^\d+\.\s/)) {
+                        return `<div style="margin-left: 16px; margin-top: 4px;">${line}</div>`;
+                    }
+                    return `<div style="margin-top: 8px;">${line}</div>`;
+                })
+                .filter(l => l)
+                .join('');
+            
+            return `<div style="color: #e2e8f0;">${html}</div>`;
+        }
+        
+        function clearAll() {
+            document.getElementById('codeInput').value = '';
+            document.getElementById('language').value = 'COBOL';
+            document.getElementById('outputSection').classList.remove('active');
+            document.getElementById('loading').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
